@@ -118,6 +118,80 @@ class MovieListViewModelTests: XCTestCase {
             }
             .store(in: &cancellables)
     }
+    
+    func test_getMovies_givenServiceCallFailsOtherSucceeds_shouldUpdateStateWithError() {
+        // given
+        mockMovieService.getMovieResult = .failure(MockError.error)
+        mockMovieService.getFavoriteResult = .success(Response<Favorite>(results: Constant.favorites))
+        
+        // when
+        subject.getMovies()
+        
+        // then
+        XCTAssertEqual(mockMovieService.getFavoriteCallsCount, 1)
+        XCTAssertEqual(mockMovieService.getMovieCallsCount, 1)
+        
+        subject.$favoriteMovies
+            .sink { (movies) in
+                XCTAssertEqual(movies, [])
+            }
+            .store(in: &cancellables)
+        
+        subject.$watchedMovies
+            .sink { (movies) in
+                XCTAssertEqual(movies, [])
+            }
+            .store(in: &cancellables)
+        
+        subject.$unwatchedMovies
+            .sink { (movies) in
+                XCTAssertEqual(movies, [])
+            }
+            .store(in: &cancellables)
+        
+        subject.$state
+            .sink { (state) in
+                XCTAssertEqual(state, .error(.fetchMovieError))
+            }
+            .store(in: &cancellables)
+    }
+    
+    func test_getMovies_givenServiceCallSucceedsOtherFails_shouldUpdateStateWithError() {
+        // given
+        mockMovieService.getMovieResult = .success(Response<Movie>(results: Constant.movies))
+        mockMovieService.getFavoriteResult = .failure((MockError.error))
+        
+        // when
+        subject.getMovies()
+        
+        // then
+        XCTAssertEqual(mockMovieService.getFavoriteCallsCount, 1)
+        XCTAssertEqual(mockMovieService.getMovieCallsCount, 1)
+        
+        subject.$favoriteMovies
+            .sink { (movies) in
+                XCTAssertEqual(movies, [])
+            }
+            .store(in: &cancellables)
+        
+        subject.$watchedMovies
+            .sink { (movies) in
+                XCTAssertEqual(movies, [])
+            }
+            .store(in: &cancellables)
+        
+        subject.$unwatchedMovies
+            .sink { (movies) in
+                XCTAssertEqual(movies, [])
+            }
+            .store(in: &cancellables)
+        
+        subject.$state
+            .sink { (state) in
+                XCTAssertEqual(state, .error(.fetchMovieError))
+            }
+            .store(in: &cancellables)
+    }
 }
 
 // MARK: Helpers

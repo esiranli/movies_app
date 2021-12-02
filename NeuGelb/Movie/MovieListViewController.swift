@@ -97,11 +97,17 @@ class MovieListViewController: UIViewController {
         configureCollectionView()
         addSubviews()
         setupBindings()
+        
+        viewModel.getMovies()
     }
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        viewModel.getMovies()
+        // clear previous selections and set next button state to normal
+//        if let indexPath = selectedIndexPath {
+//            collectionView.deselectItem(at: indexPath, animated: true)
+//            deselectItem()
+//        }
     }
     
     private func configureCollectionView() {
@@ -327,22 +333,6 @@ extension MovieListViewController: UICollectionViewDataSource, UICollectionViewD
         
     }
     
-    func selectItem(indexPath: IndexPath) {
-        selectedIndexPath = indexPath
-        nextButton.isSelected = true
-        nextButton.isUserInteractionEnabled = true
-        nextButton.backgroundColor = UIColor(named: "accentColor")
-    }
-    
-    func deselectItem() {
-        selectedIndexPath = nil
-        nextButton.isSelected = false
-        nextButton.isUserInteractionEnabled = false
-        nextButton.backgroundColor = UIColor(named: "primaryColor")
-    }
-    
-    
-    
     func collectionView(_ collectionView: UICollectionView, didDeselectItemAt indexPath: IndexPath) {
         if indexPath.section == 0, let cell = collectionView.cellForItem(at: indexPath) as? VerticalMovieCardCell {
             cell.isSelected = false
@@ -356,45 +346,41 @@ extension MovieListViewController: UICollectionViewDataSource, UICollectionViewD
         }
     }
     
+    private func selectItem(indexPath: IndexPath) {
+        selectedIndexPath = indexPath
+        nextButton.isSelected = true
+        nextButton.isUserInteractionEnabled = true
+        nextButton.backgroundColor = UIColor(named: "accentColor")
+    }
+    
+    private func deselectItem() {
+        selectedIndexPath = nil
+        nextButton.isSelected = false
+        nextButton.isUserInteractionEnabled = false
+        nextButton.backgroundColor = UIColor(named: "primaryColor")
+    }
+
     private func reloadSection(for type: MovieSection) {
         self.collectionView.reloadSections(IndexSet(integer: type.rawValue))
     }
     
     func findMatchInFavorites(selected: Bool, viewModel: MovieCardViewModel) {
-        matchedIndexPath = searchMatchInFavorites(viewModel: viewModel)
-        if let matched = matchedIndexPath, let matchedCell = collectionView.cellForItem(at: matched) as? VerticalMovieCardCell {
-            matchedCell.isSelected = selected
+        guard let index = favoriteMovies.firstIndex(where: {$0.id == viewModel.id}) else { return nil }
+        let indexPath = IndexPath(item: index, section: 0)
+        if let cell = collectionView.cellForItem(at: indexPath) as? VerticalMovieCardCell {
+            cell.isSelected = selected
         }
     }
     
     func findMatchInUnfavorites(selected: Bool, viewModel: MovieCardViewModel) {
-        matchedIndexPath = searchMatchInUnfavorites(viewModel: viewModel)
-        if let matched = matchedIndexPath, let matchedCell = collectionView.cellForItem(at: matched) as? HorizontalMovieCardCell {
-            matchedCell.isSelected = selected
-        }
-    }
-    
-    func searchMatchInFavorites(viewModel: MovieCardViewModel) -> IndexPath? {
-        if let index = favoriteMovies.firstIndex(where: {$0.id == viewModel.id}) {
-            return IndexPath(item: index, section: 0)
-        }
-        return nil
-    }
-    
-    func searchMatchInUnfavorites(viewModel: MovieCardViewModel) -> IndexPath? {
+        let indexPath: IndexPath?
         if let index = watchedMovies.firstIndex(where: {$0.id == viewModel.id}) {
-            return IndexPath(item: index, section: 1)
+            indexPath = IndexPath(item: index, section: 1)
         } else if let index = unwatchedMovies.firstIndex(where: {$0.id == viewModel.id}){
-            return IndexPath(item: index, section: 2)
+            indexPath = IndexPath(item: index, section: 2)
         }
-        return nil
+        if let cell = collectionView.cellForItem(at: indexPath) as? HorizontalMovieCardCell {
+            cell.isSelected = selected
+        }
     }
 }
-
-
-
-
-
-
-
-
