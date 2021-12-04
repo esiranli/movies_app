@@ -29,6 +29,7 @@ class MovieListViewController: UIViewController {
     
     private let viewModel: MovieListViewModel
     private var subscriptions = Set<AnyCancellable>()
+    private var selectedIndexPath: IndexPath?
     
     init(viewModel: MovieListViewModel = MovieListViewModel()) {
         self.viewModel = viewModel
@@ -235,7 +236,7 @@ class MovieListViewController: UIViewController {
     }
     
     @objc
-    func nextButtonPressed() {
+    private func nextButtonPressed() {
         guard let indexPath = selectedIndexPath,
               let cell = collectionView.cellForItem(at: indexPath) else { return }
             
@@ -247,7 +248,7 @@ class MovieListViewController: UIViewController {
         }
     }
     
-    func navigateToDetailPage(viewModel: MovieCardViewModel) {
+    private func navigateToDetailPage(viewModel: MovieCardViewModel) {
         self.navigationController?.pushViewController(MovieDetailViewController(viewModel: viewModel), animated: true)
     }
     
@@ -259,10 +260,6 @@ class MovieListViewController: UIViewController {
         alertController.addAction(alertAction)
         present(alertController, animated: true, completion: nil)
     }
-    
-    private var selectedIndexPath: IndexPath?
-    private var matchedIndexPath: IndexPath?
-    private var selectedMovie: String?
 }
 
 extension MovieListViewController: UICollectionViewDataSource, UICollectionViewDelegate {
@@ -323,12 +320,10 @@ extension MovieListViewController: UICollectionViewDataSource, UICollectionViewD
             if let cell = collectionView.cellForItem(at: indexPath) as? VerticalMovieCardCell {
                 cell.isSelected = true
                 selectItem(indexPath: indexPath)
-//                findMatchInUnfavorites(selected: true, viewModel: cell.viewModel)
             }
         } else if let cell = collectionView.cellForItem(at: indexPath) as? HorizontalMovieCardCell {
             cell.isSelected = true
             selectItem(indexPath: indexPath)
-//            findMatchInFavorites(selected: true, viewModel: cell.viewModel)
         }
         
     }
@@ -337,12 +332,9 @@ extension MovieListViewController: UICollectionViewDataSource, UICollectionViewD
         if indexPath.section == 0, let cell = collectionView.cellForItem(at: indexPath) as? VerticalMovieCardCell {
             cell.isSelected = false
             deselectItem()
-//            findMatchInUnfavorites(selected: false, viewModel: cell.viewModel)
-            
         } else if let cell = collectionView.cellForItem(at: indexPath) as? HorizontalMovieCardCell {
             cell.isSelected = false
             deselectItem()
-//            findMatchInFavorites(selected: false, viewModel: cell.viewModel)
         }
     }
     
@@ -362,25 +354,5 @@ extension MovieListViewController: UICollectionViewDataSource, UICollectionViewD
 
     private func reloadSection(for type: MovieSection) {
         self.collectionView.reloadSections(IndexSet(integer: type.rawValue))
-    }
-    
-    func findMatchInFavorites(selected: Bool, viewModel: MovieCardViewModel) {
-        guard let index = favoriteMovies.firstIndex(where: {$0.id == viewModel.id}) else { return nil }
-        let indexPath = IndexPath(item: index, section: 0)
-        if let cell = collectionView.cellForItem(at: indexPath) as? VerticalMovieCardCell {
-            cell.isSelected = selected
-        }
-    }
-    
-    func findMatchInUnfavorites(selected: Bool, viewModel: MovieCardViewModel) {
-        let indexPath: IndexPath?
-        if let index = watchedMovies.firstIndex(where: {$0.id == viewModel.id}) {
-            indexPath = IndexPath(item: index, section: 1)
-        } else if let index = unwatchedMovies.firstIndex(where: {$0.id == viewModel.id}){
-            indexPath = IndexPath(item: index, section: 2)
-        }
-        if let cell = collectionView.cellForItem(at: indexPath) as? HorizontalMovieCardCell {
-            cell.isSelected = selected
-        }
     }
 }
